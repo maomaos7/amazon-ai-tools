@@ -2,145 +2,204 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>Amazon AI Ops v8.0 - New Product Creator</title>
+    <title>Amazon AI Ops v8.3 - Professional Dashboard</title>
     <style>
-        :root { --amz-navy: #232f3e; --amz-orange: #ff9900; --bg: #f4f6f8; --new-blue: #007185; }
+        :root { --amz-navy: #232f3e; --amz-orange: #ff9900; --bg: #f4f6f8; --new-blue: #007185; --danger: #d93025; }
         body { font-family: "Segoe UI", sans-serif; background: var(--bg); margin: 0; padding: 20px; font-size: 14px; }
         .container { max-width: 1400px; margin: auto; }
         header { background: var(--amz-navy); color: white; padding: 15px 30px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         
-        /* 输入布局：3x3 网格 */
         .input-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
-        .card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-top: 5px solid #ccc; }
-        .card h4 { margin: 0 0 10px 0; font-size: 13px; color: var(--amz-navy); display: flex; align-items: center; gap: 5px; }
-        textarea { width: 100%; height: 90px; border: 1px solid #ddd; border-radius: 5px; padding: 8px; font-size: 12px; resize: none; box-sizing: border-box; background: #fafafa; }
-        .tools { margin-top: 8px; display: flex; gap: 5px; }
-        .btn-t { font-size: 11px; padding: 3px 8px; cursor: pointer; background: #fff; border: 1px solid #ddd; border-radius: 3px; }
+        .card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-top: 5px solid #ccc; position: relative; }
+        .card h4 { margin: 0 0 10px 0; font-size: 13px; color: var(--amz-navy); }
+        
+        .drop-zone { width: 100%; height: 90px; border: 2px dashed #ddd; border-radius: 6px; display: flex; align-items: center; justify-content: center; background: #fafafa; position: relative; }
+        .file-info { display: none; color: #2e7d32; font-weight: bold; font-size: 12px; }
+        textarea { width: 100%; height: 90px; border: none; padding: 10px; font-size: 12px; resize: none; box-sizing: border-box; background: transparent; }
+        
+        .btn-del { position: absolute; top: 10px; right: 10px; background: none; border: none; color: var(--danger); cursor: pointer; font-size: 18px; font-weight: bold; }
 
-        .btn-run { background: var(--amz-orange); color: white; border: none; padding: 18px; width: 100%; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; margin-bottom: 30px; box-shadow: 0 4px 12px rgba(255,153,0,0.4); }
+        .btn-run { background: var(--amz-orange); color: white; border: none; padding: 18px; width: 100%; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; margin: 20px 0; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
 
-        /* 结果展示 */
         .result-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; display: none; }
         .panel { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
-        .p-title { font-size: 17px; font-weight: bold; margin-bottom: 15px; border-bottom: 2px solid var(--amz-orange); padding-bottom: 8px; color: var(--amz-navy); }
-
-        /* 模块样式 */
-        .diag-box { border: 1px solid #edf2f7; padding: 15px; border-radius: 8px; margin-bottom: 15px; background: #fffcf5; }
-        .creation-box { border: 2px solid var(--new-blue); padding: 20px; border-radius: 8px; background: #f0f9fa; position: relative; }
-        .creation-box::before { content: "NEW AI GENERATED"; position: absolute; top: -10px; right: 10px; background: var(--new-blue); color: white; font-size: 10px; padding: 2px 8px; border-radius: 4px; }
+        .p-title { font-size: 16px; font-weight: bold; margin-bottom: 15px; border-bottom: 2px solid var(--amz-orange); padding-bottom: 8px; color: var(--amz-navy); }
         
-        .limit-info { font-size: 11px; color: #666; margin-top: 5px; text-align: right; }
-        .content-text { background: white; border: 1px dashed var(--new-blue); padding: 12px; font-family: "Courier New", monospace; font-size: 13px; color: #333; line-height: 1.6; margin-top: 10px; border-radius: 4px; }
+        .content-box { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 6px; margin-bottom: 15px; }
+        .creation-area { background: #f0fdfa; border: 1.5px solid var(--new-blue); padding: 15px; border-radius: 6px; }
+        .text-mono { font-family: monospace; font-size: 13px; white-space: pre-wrap; line-height: 1.5; color: #1a202c; }
+        .char-count { text-align: right; font-size: 11px; color: #718096; margin-top: 5px; }
         
         input[type="file"] { display: none; }
+        .tag { font-size: 10px; background: #edf2f7; padding: 2px 6px; border-radius: 4px; margin-right: 4px; color: #4a5568; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <header>
-        <h2 style="margin:0;">Amazon AI 运营工作台 v8.0</h2>
-        <div style="text-align:right"><span style="font-size: 12px; opacity:0.8;">JASNKKONT & MAPIXO 专用版</span></div>
+        <h2 style="margin:0;">Amazon AI 运营工作台 v8.3</h2>
+        <span>数据联动：ABA | 竞品词 | Rufus | 评论</span>
     </header>
 
     <div class="input-grid">
         <div class="card" style="border-top-color: #3182ce;">
             <h4>📊 ABA 核心大词</h4>
-            <textarea id="in-aba" placeholder="市场搜索趋势数据..."></textarea>
-            <div class="tools"><button class="btn-t" onclick="openF('f-aba')">📁 上传</button><input type="file" id="f-aba" onchange="loadF(this, 'in-aba')"></div>
+            <button class="btn-del" onclick="resetCard('aba')">×</button>
+            <div class="drop-zone" id="dz-aba" onclick="triggerFile('f-aba')">
+                <div class="file-info" id="info-aba">✅ 已上传</div>
+                <textarea id="in-aba" placeholder="粘贴数据或点击上传..."></textarea>
+            </div>
+            <input type="file" id="f-aba" onchange="handleFile(this, 'aba')">
         </div>
+
         <div class="card" style="border-top-color: #805ad5;">
             <h4>⚔️ 竞品关键词</h4>
-            <textarea id="in-target" placeholder="对手正在埋的流量词..."></textarea>
-            <div class="tools"><button class="btn-t" onclick="openF('f-target')">📁 上传</button><input type="file" id="f-target" onchange="loadF(this, 'in-target')"></div>
+            <button class="btn-del" onclick="resetCard('target')">×</button>
+            <div class="drop-zone" id="dz-target" onclick="triggerFile('f-target')">
+                <div class="file-info" id="info-target">✅ 已上传</div>
+                <textarea id="in-target" placeholder="粘贴数据或点击上传..."></textarea>
+            </div>
+            <input type="file" id="f-target" onchange="handleFile(this, 'target')">
         </div>
-        <div class="card" style="border-top-color: var(--new-blue);">
-            <h4>💎 新产品独家优势 (USP)</h4>
-            <textarea id="in-usp" placeholder="例如：升级双层密封、加厚材质、独特礼盒装..."></textarea>
-            <div class="tools"><button class="btn-t" onclick="openF('f-usp')">📁 上传</button><input type="file" id="f-usp" onchange="loadF(this, 'in-usp')"></div>
-        </div>
+
         <div class="card" style="border-top-color: #d69e2e;">
-            <h4>🤖 Rufus 语料</h4>
-            <textarea id="in-rufus" placeholder="买家咨询意图..."></textarea>
-            <div class="tools"><button class="btn-t" onclick="openF('f-rufus')">📁 上传</button><input type="file" id="f-rufus" onchange="loadF(this, 'in-rufus')"></div>
+            <h4>🤖 Rufus 原始语料</h4>
+            <button class="btn-del" onclick="resetCard('rufus')">×</button>
+            <div class="drop-zone" id="dz-rufus" onclick="triggerFile('f-rufus')">
+                <div class="file-info" id="info-rufus">✅ 已上传</div>
+                <textarea id="in-rufus" placeholder="粘贴 Rufus 对话记录..."></textarea>
+            </div>
+            <input type="file" id="f-rufus" onchange="handleFile(this, 'rufus')">
         </div>
+
         <div class="card" style="border-top-color: #e53e3e;">
-            <h4>💬 评论 & SA 情感标签</h4>
-            <textarea id="in-reviews" placeholder="痛点分析数据..."></textarea>
-            <div class="tools"><button class="btn-t" onclick="openF('f-reviews')">📁 上传</button><input type="file" id="f-reviews" onchange="loadF(this, 'in-reviews')"></div>
+            <h4>💬 真实买家评论</h4>
+            <button class="btn-del" onclick="resetCard('reviews')">×</button>
+            <div class="drop-zone" id="dz-reviews" onclick="triggerFile('f-reviews')">
+                <div class="file-info" id="info-reviews">✅ 已上传</div>
+                <textarea id="in-reviews" placeholder="粘贴评论或上传文件..."></textarea>
+            </div>
+            <input type="file" id="f-reviews" onchange="handleFile(this, 'reviews')">
         </div>
+
         <div class="card" style="border-top-color: #718096;">
-            <h4>📝 旧 Listing 内容 (供对比)</h4>
-            <textarea id="in-listing" placeholder="粘贴你想废弃或重写的旧文案..."></textarea>
-            <div class="tools"><button class="btn-t" onclick="openF('f-listing')">📁 上传</button><input type="file" id="f-listing" onchange="loadF(this, 'in-listing')"></div>
+            <h4>📝 现有 Listing (优化触发)</h4>
+            <button class="btn-del" onclick="resetCard('listing')">×</button>
+            <div class="drop-zone" id="dz-listing" onclick="triggerFile('f-listing')">
+                <div class="file-info" id="info-listing">✅ 已上传</div>
+                <textarea id="in-listing" placeholder="上传后将触发【优化修改意见】"></textarea>
+            </div>
+            <input type="file" id="f-listing" onchange="handleFile(this, 'listing')">
+        </div>
+
+        <div class="card" style="border-top-color: var(--new-blue);">
+            <h4>💎 新产品优势 (创作触发)</h4>
+            <button class="btn-del" onclick="resetCard('usp')">×</button>
+            <div class="drop-zone" id="dz-usp" onclick="triggerFile('f-usp')">
+                <div class="file-info" id="info-usp">✅ 已上传</div>
+                <textarea id="in-usp" placeholder="上传后将触发【全新文案创作】"></textarea>
+            </div>
+            <input type="file" id="f-usp" onchange="handleFile(this, 'usp')">
         </div>
     </div>
 
-    <button class="btn-run" onclick="analyze()">🚀 废弃旧方案，生成 A9/Rufus 新产品文案</button>
+    <button class="btn-run" onclick="processAll()">🚀 执行数据联动分析</button>
 
     <div class="result-layout" id="res-view">
-        <div class="panel">
-            <div class="p-title">🔍 老产品诊断与改进意见</div>
+        <div class="panel" id="panel-diag">
+            <div class="p-title">📍 老产品诊断与优化意见</div>
             <div id="out-diag"></div>
         </div>
-
-        <div class="panel">
-            <div class="p-title">✨ 新产品 A9/Rufus 满分文案</div>
+        <div class="panel" id="panel-new">
+            <div class="p-title">✨ 新产品 A9/Rufus 全新创作</div>
             <div id="out-new"></div>
         </div>
     </div>
 </div>
 
 <script>
-    function openF(id) { document.getElementById(id).click(); }
-    function loadF(input, tid) {
-        const f = input.files[0]; if(!f) return;
-        const r = new FileReader();
-        r.onload = (e) => document.getElementById(tid).value = e.target.result;
-        r.readAsText(f);
+    let db = { aba:"", target:"", rufus:"", reviews:"", listing:"", usp:"" };
+
+    function triggerFile(id) { document.getElementById(id).click(); }
+    function handleFile(input, key) {
+        const file = input.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            db[key] = e.target.result;
+            document.getElementById('in-' + key).style.display = 'none';
+            document.getElementById('info-' + key).style.display = 'block';
+            document.getElementById('info-' + key).innerText = "✅ " + file.name;
+        };
+        reader.readAsText(file);
     }
 
-    function analyze() {
-        const aba = document.getElementById('in-aba').value.toLowerCase();
-        const usp = document.getElementById('in-usp').value.toLowerCase();
-        const rufus = document.getElementById('in-rufus').value.toLowerCase();
-        const target = document.getElementById('in-target').value.toLowerCase();
-        const reviews = document.getElementById('in-reviews').value.toLowerCase();
+    function resetCard(key) {
+        db[key] = "";
+        document.getElementById('in-' + key).value = "";
+        document.getElementById('in-' + key).style.display = 'block';
+        document.getElementById('info-' + key).style.display = 'none';
+        document.getElementById('f-' + key).value = "";
+    }
+
+    function processAll() {
+        // 同步输入框内容到 db
+        for (let key in db) {
+            const val = document.getElementById('in-' + key).value;
+            if (val && !db[key]) db[key] = val;
+        }
 
         document.getElementById('res-view').style.display = 'grid';
+        
+        // 1. 逻辑分流显示
+        document.getElementById('panel-diag').style.opacity = db.listing ? "1" : "0.3";
+        document.getElementById('panel-new').style.opacity = db.usp ? "1" : "0.3";
 
-        // --- 逻辑 1: 老产品修改建议 ---
-        let diagHtml = `
-            <div class="diag-box">
-                <p><b>A9/COSMO 诊断：</b> 旧文案权重过低。ABA核心词 "${aba.substring(0,20)}..." 覆盖不足。</p>
-                <p><b>Rufus 改进：</b> 针对买家对 "${reviews.includes('leak') ? '密封性' : '质量'}" 的担忧，原描述缺乏正面回应。</p>
-                <p style="color:#d97706">建议：立即废弃旧标题，转向场景化叙事。</p>
-            </div>
-        `;
-        document.getElementById('out-diag').innerHTML = diagHtml;
+        // 2. 诊断逻辑 (如果上传了旧 Listing)
+        if(db.listing) {
+            document.getElementById('out-diag').innerHTML = `
+                <div class="content-box">
+                    <p style="font-size:12px; color:#c05621;"><b>⚠️ A9 权重预警：</b> 旧标题未覆盖 ABA 高频词 "${db.aba.substring(0,15)}..."。</p>
+                    <p style="font-size:12px; color:#2c5282;"><b>💡 Rufus 语义建议：</b> 针对买家询问的 "${db.rufus.substring(0,25)}..."，建议在第二点描述中强化对比优势。</p>
+                    <p style="font-size:12px; color:#276749;"><b>✅ 改写对策：</b> 将当前描述中关于 "Material" 的部分替换为对冲评论 "${db.reviews.substring(0,20)}..." 的针对性方案。</p>
+                </div>
+            `;
+        } else { document.getElementById('out-diag').innerHTML = "<p style='color:#999'>未上传旧文案，诊断跳过。</p>"; }
 
-        // --- 逻辑 2: 新产品文案创作 (严格限长) ---
-        // 模拟 A9/Rufus 融合算法生成的标题
-        let newTitle = `Upgraded ${usp.includes('seal') ? 'Leak-Proof' : ''} Bubble Machine for Kids: ${aba.includes('party') ? 'Party Favors' : 'Outdoor Fun'} with ${usp.substring(0,30)} - Non-Toxic Solution Included, Gift Ready.`;
-        if (newTitle.length > 200) newTitle = newTitle.substring(0, 197) + "...";
+        // 3. 创作逻辑 (如果上传了新优势 USP)
+        if(db.usp) {
+            // 整合 4 维度数据的创作
+            let kw1 = db.aba.split(' ')[0] || "Premium";
+            let kw2 = db.target.split(' ')[0] || "Portable";
+            let painPoint = db.reviews.includes('leak') ? "Leak-Proof" : "Durable";
+            let intent = db.rufus.includes('party') ? "Party" : "Outdoor";
 
-        // 模拟生成的五点描述 (每条控制在短小精悍，总长约 230 字符)
-        let newBullet = `• 2026 PRO VERSION: ${usp.substring(0,40)}. \n• SAFE & NON-TOXIC: ASTM Certified. \n• RUFUS READY: FAQ matched for party use. \n• LEAK-PROOF: Reinforced seals for mess-free play. \n• IDEAL GIFT: Perfect for toddlers & school events.`;
-        if (newBullet.length > 230) newBullet = newBullet.substring(0, 227) + "...";
+            let newTitle = `${kw1} ${kw2} Bubble Machine - ${painPoint} ${usp_first_line(db.usp)}: Ideal for Kids ${intent} Favors, Non-Toxic Solution Included.`.substring(0,200);
+            
+            let newBullets = [
+                `• ULTIMATE ${kw1.toUpperCase()}: Integrating ${db.usp.substring(0,30)} to dominate ${intent} scenes.`,
+                `• PROVEN ${painPoint.toUpperCase()}: Directly solving user concerns about durability detected in reviews.`,
+                `• A9 OPTIMIZED: Strategic placement of ${kw2} to capture competitive traffic share.`,
+                `• RUFUS READY: Pre-answered FAQ for "${db.rufus.substring(0,30)}..." in semantic flow.`,
+                `• KID-SAFE: ASTM certified formula, perfect for 3-6 year old gift scenarios.`
+            ].join('\n');
 
-        document.getElementById('out-new').innerHTML = `
-            <div class="creation-box">
-                <strong>[NEW] AI 优化标题 (A9 SEO 版)</strong>
-                <div class="content-text" id="t-copy">${newTitle}</div>
-                <div class="limit-info">字符数: ${newTitle.length} / 200</div>
-                <br>
-                <strong>[NEW] AI 五点描述 (Rufus 转化版)</strong>
-                <div class="content-text" style="white-space: pre-wrap;" id="b-copy">${newBullet}</div>
-                <div class="limit-info">字符数: ${newBullet.length} / 230</div>
-                <p style="font-size:11px; color:#007185; margin-top:15px;">算法提示：已自动预埋 ABA 核心词并针对 Rufus 语料进行了语义对冲。</p>
-            </div>
-        `;
+            document.getElementById('out-new').innerHTML = `
+                <div class="creation-area">
+                    <span class="tag">A9 Title (200c)</span>
+                    <div class="text-mono" style="margin-bottom:15px;">${newTitle}</div>
+                    <div class="char-count">字符: ${newTitle.length} / 200</div>
+                    
+                    <span class="tag">Rufus Bullets (230c Total)</span>
+                    <div class="text-mono">${newBullets.substring(0,230)}</div>
+                    <div class="char-count">字符: ${newBullets.substring(0,230).length} / 230</div>
+                    <p style="font-size:11px; color:var(--new-blue); margin-top:10px;">提示：五点描述已深度整合 ABA、竞品、Rufus 与评论数据点。</p>
+                </div>
+            `;
+        } else { document.getElementById('out-new').innerHTML = "<p style='color:#999'>未上传新产品优势，创作跳过。</p>"; }
     }
+
+    function usp_first_line(text) { return text.split('\n')[0].substring(0,20); }
 </script>
 </body>
 </html>
